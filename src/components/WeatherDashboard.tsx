@@ -7,6 +7,7 @@ import RadarView from './RadarView';
 import SettingsModal from './SettingsModal';
 import WeatherParticles from './WeatherParticles';
 import WeatherWindow from './WeatherWindow';
+import AppHeader from './AppHeader';
 import { useWeather } from '@/hooks/useWeather';
 import { toast } from '@/hooks/use-toast';
 import { getTranslations, translateWeatherCondition, detectBrowserLanguage } from '@/utils/translations';
@@ -169,7 +170,8 @@ const WeatherDashboard = () => {
       <WeatherParticles conditionCode={conditionCode} timeOfDay={timeOfDay} />
       
       <div className="relative z-10 flex flex-col min-h-screen">
-        <div className="flex-1 overflow-y-auto pb-28 pt-safe">
+        <AppHeader />
+        <div className="flex-1 overflow-y-auto pb-28">
           
           {weatherData ? (
             <>
