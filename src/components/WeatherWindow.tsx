@@ -111,7 +111,14 @@ interface WeatherWindowProps {
 const WeatherWindow: React.FC<WeatherWindowProps> = ({ hourly, language, onHaptic }) => {
   const [selectedActivity, setSelectedActivity] = useState('running');
   const [notifiedActivities, setNotifiedActivities] = useState<Set<string>>(new Set());
+  const [animKey, setAnimKey] = useState(0);
   const lang = language || 'en';
+
+  const handleSelectActivity = (id: string) => {
+    onHaptic?.();
+    setSelectedActivity(id);
+    setAnimKey(k => k + 1);
+  };
 
   const result = useMemo(() => findBestWindow(selectedActivity, hourly), [selectedActivity, hourly]);
 
