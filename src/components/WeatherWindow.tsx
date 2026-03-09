@@ -111,7 +111,14 @@ interface WeatherWindowProps {
 const WeatherWindow: React.FC<WeatherWindowProps> = ({ hourly, language, onHaptic }) => {
   const [selectedActivity, setSelectedActivity] = useState('running');
   const [notifiedActivities, setNotifiedActivities] = useState<Set<string>>(new Set());
+  const [animKey, setAnimKey] = useState(0);
   const lang = language || 'en';
+
+  const handleSelectActivity = (id: string) => {
+    onHaptic?.();
+    setSelectedActivity(id);
+    setAnimKey(k => k + 1);
+  };
 
   const result = useMemo(() => findBestWindow(selectedActivity, hourly), [selectedActivity, hourly]);
 
@@ -159,7 +166,7 @@ const WeatherWindow: React.FC<WeatherWindowProps> = ({ hourly, language, onHapti
             return (
               <button
                 key={a.id}
-                onClick={() => { onHaptic?.(); setSelectedActivity(a.id); }}
+                onClick={() => handleSelectActivity(a.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-medium whitespace-nowrap transition-all duration-300 min-h-[44px] backdrop-blur-md border ${
                   isActive
                     ? 'bg-white/20 text-white shadow-[0_8px_32px_rgba(255,255,255,0.15)] scale-105 border-white/30'
@@ -174,7 +181,7 @@ const WeatherWindow: React.FC<WeatherWindowProps> = ({ hourly, language, onHapti
         </div>
 
         {/* Best Window Card */}
-        <div className="rounded-2xl p-4 space-y-3 bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] shadow-[0_8px_32px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.1)]">
+        <div key={animKey} className="rounded-2xl p-4 space-y-3 bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] shadow-[0_8px_32px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] animate-[cardSwitch_0.35s_ease-out]">
           {bestHour && result.bestScore > 20 ? (
             <>
               <p className="text-white/50 text-xs uppercase tracking-wider">
