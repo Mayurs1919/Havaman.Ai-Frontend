@@ -136,8 +136,24 @@ const WeatherDashboard = () => {
 
   const conditionCode = weatherData?.conditionCode || 'Default';
 
+  const getTimeOfDay = (): string => {
+    const hour = new Date().getHours();
+    if (hour >= 6 && hour < 12) return 'morning';
+    if (hour >= 12 && hour < 15) return 'afternoon';
+    if (hour >= 15 && hour < 18) return 'dusk';
+    if (hour >= 18 && hour < 20) return 'evening';
+    return 'night';
+  };
+
+  const [timeOfDay, setTimeOfDay] = useState(getTimeOfDay());
+
+  useEffect(() => {
+    const interval = setInterval(() => setTimeOfDay(getTimeOfDay()), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div data-weather={conditionCode} className="weather-app max-w-[480px] mx-auto relative min-h-screen">
+    <div data-weather={conditionCode} data-timeofday={timeOfDay} className="weather-app max-w-[480px] mx-auto relative min-h-screen">
       <div className="weather-bg" />
       
       <div className="relative z-10 flex flex-col min-h-screen">
