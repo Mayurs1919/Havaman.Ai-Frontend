@@ -119,21 +119,104 @@
   
   .weather-bg {
     position: fixed; inset: 0; z-index: 0;
-    transition: background 1s ease;
+    transition: background 1.5s cubic-bezier(0.4, 0, 0.2, 1), filter 1.5s ease;
   }
-  
-  /* Time-of-day base backgrounds */
-  [data-timeofday="morning"] .weather-bg { background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 30%, #60a5fa 70%, #3b82f6 100%); }
-  [data-timeofday="afternoon"] .weather-bg { background: linear-gradient(180deg, #38bdf8 0%, #3b82f6 50%, #2563eb 100%); }
-  [data-timeofday="dusk"] .weather-bg { background: linear-gradient(180deg, #f97316 0%, #e11d48 40%, #7c3aed 80%, #312e81 100%); }
-  [data-timeofday="evening"] .weather-bg { background: linear-gradient(180deg, #6d28d9 0%, #4c1d95 40%, #1e1b4b 80%, #0f172a 100%); }
-  [data-timeofday="night"] .weather-bg { background: linear-gradient(180deg, #0f172a 0%, #020617 50%, #000 100%); }
 
-  /* Weather condition overrides layered on top of time */
-  [data-weather="Clouds"] .weather-bg { filter: saturate(0.6) brightness(0.85); }
-  [data-weather="Rain"] .weather-bg, [data-weather="Drizzle"] .weather-bg { filter: saturate(0.4) brightness(0.65); }
-  [data-weather="Thunderstorm"] .weather-bg { filter: saturate(0.3) brightness(0.4); }
-  [data-weather="Snow"] .weather-bg { filter: saturate(0.2) brightness(1.1); }
+  .weather-bg::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: inherit;
+    animation: bgShift 20s ease-in-out infinite alternate;
+  }
+
+  .weather-bg::after {
+    content: '';
+    position: absolute; inset: 0;
+    opacity: 0.4;
+    animation: bgGlow 8s ease-in-out infinite;
+  }
+
+  @keyframes bgShift {
+    0%   { background-position: 0% 0%; }
+    50%  { background-position: 50% 100%; }
+    100% { background-position: 100% 0%; }
+  }
+
+  @keyframes bgGlow {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 0.35; }
+  }
+
+  /* ── Morning: warm sunrise golden light ── */
+  [data-timeofday="morning"] .weather-bg {
+    background: linear-gradient(170deg, #fcd34d 0%, #fb923c 20%, #f97316 35%, #7dd3fc 60%, #38bdf8 80%, #0ea5e9 100%);
+    background-size: 200% 200%;
+  }
+  [data-timeofday="morning"] .weather-bg::after {
+    background: radial-gradient(ellipse 60% 50% at 70% 15%, rgba(253,224,71,0.5), transparent 70%);
+  }
+
+  /* ── Afternoon: bright vivid sky ── */
+  [data-timeofday="afternoon"] .weather-bg {
+    background: linear-gradient(175deg, #7dd3fc 0%, #38bdf8 25%, #0284c7 50%, #0369a1 75%, #1d4ed8 100%);
+    background-size: 200% 200%;
+  }
+  [data-timeofday="afternoon"] .weather-bg::after {
+    background: radial-gradient(ellipse 50% 40% at 50% 10%, rgba(186,230,253,0.4), transparent 70%);
+  }
+
+  /* ── Dusk: dramatic sunset spectrum ── */
+  [data-timeofday="dusk"] .weather-bg {
+    background: linear-gradient(175deg, #fbbf24 0%, #f97316 15%, #ef4444 30%, #db2777 50%, #9333ea 70%, #4c1d95 85%, #1e1b4b 100%);
+    background-size: 200% 200%;
+  }
+  [data-timeofday="dusk"] .weather-bg::after {
+    background: radial-gradient(ellipse 80% 30% at 50% 40%, rgba(251,146,60,0.35), transparent 70%);
+  }
+
+  /* ── Evening: deep twilight violet ── */
+  [data-timeofday="evening"] .weather-bg {
+    background: linear-gradient(175deg, #7c3aed 0%, #6d28d9 15%, #5b21b6 30%, #4c1d95 50%, #2e1065 70%, #1e1b4b 85%, #0f172a 100%);
+    background-size: 200% 200%;
+  }
+  [data-timeofday="evening"] .weather-bg::after {
+    background: radial-gradient(ellipse 40% 30% at 30% 20%, rgba(139,92,246,0.25), transparent 70%);
+  }
+
+  /* ── Night: deep space with star shimmer ── */
+  [data-timeofday="night"] .weather-bg {
+    background: linear-gradient(175deg, #0f172a 0%, #020617 30%, #000 60%, #0c0a1a 80%, #0f172a 100%);
+    background-size: 200% 200%;
+  }
+  [data-timeofday="night"] .weather-bg::after {
+    background: 
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1px 1px at 60% 20%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 80% 50%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(2px 2px at 15% 60%, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1px 1px at 70% 80%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 90% 15%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1.5px 1.5px at 50% 45%, rgba(255,255,255,0.35), transparent);
+    animation: starTwinkle 4s ease-in-out infinite alternate;
+  }
+
+  @keyframes starTwinkle {
+    0%   { opacity: 0.3; }
+    50%  { opacity: 0.7; }
+    100% { opacity: 0.4; }
+  }
+
+  /* ── Weather condition overlays ── */
+  [data-weather="Clouds"] .weather-bg { filter: saturate(0.55) brightness(0.82); }
+  [data-weather="Clouds"] .weather-bg::after {
+    background: linear-gradient(180deg, rgba(148,163,184,0.3) 0%, transparent 60%) !important;
+    animation: none; opacity: 0.5;
+  }
+
+  [data-weather="Rain"] .weather-bg, [data-weather="Drizzle"] .weather-bg { filter: saturate(0.35) brightness(0.6) contrast(1.1); }
+  [data-weather="Thunderstorm"] .weather-bg { filter: saturate(0.25) brightness(0.35) contrast(1.15); }
+  [data-weather="Snow"] .weather-bg { filter: saturate(0.15) brightness(1.15) contrast(0.95); }
 
   @keyframes radarSweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .radar-sweep {
