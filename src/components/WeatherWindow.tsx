@@ -160,10 +160,10 @@ const WeatherWindow: React.FC<WeatherWindowProps> = ({ hourly, language, onHapti
               <button
                 key={a.id}
                 onClick={() => { onHaptic?.(); setSelectedActivity(a.id); }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all min-h-[44px] ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-medium whitespace-nowrap transition-all duration-300 min-h-[44px] backdrop-blur-md border ${
                   isActive
-                    ? 'bg-white/25 text-white shadow-lg scale-105'
-                    : 'bg-white/8 text-white/60 hover:bg-white/15 hover:text-white/80'
+                    ? 'bg-white/20 text-white shadow-[0_8px_32px_rgba(255,255,255,0.15)] scale-105 border-white/30'
+                    : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12] hover:text-white/80 border-white/[0.08] hover:border-white/20 hover:shadow-[0_4px_16px_rgba(255,255,255,0.06)]'
                 }`}
               >
                 <span className="text-base">{a.icon}</span>
@@ -174,14 +174,14 @@ const WeatherWindow: React.FC<WeatherWindowProps> = ({ hourly, language, onHapti
         </div>
 
         {/* Best Window Card */}
-        <div className="bg-white/6 rounded-xl p-4 space-y-3">
+        <div className="rounded-2xl p-4 space-y-3 bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] shadow-[0_8px_32px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.1)]">
           {bestHour && result.bestScore > 20 ? (
             <>
               <p className="text-white/50 text-xs uppercase tracking-wider">
                 {BEST_TIME_LABELS[lang] || BEST_TIME_LABELS.en} {ACTIVITY_LABELS[selectedActivity]?.[lang] || selectedActivity}
               </p>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-2xl">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 backdrop-blur-sm border border-emerald-400/20 flex items-center justify-center text-2xl shadow-[0_4px_12px_rgba(16,185,129,0.15)]">
                   {activityCriteria.find(a => a.id === selectedActivity)?.icon}
                 </div>
                 <div className="flex-1">
