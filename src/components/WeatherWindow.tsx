@@ -166,7 +166,7 @@ const WeatherWindow: React.FC<WeatherWindowProps> = ({ hourly, language, onHapti
             return (
               <button
                 key={a.id}
-                onClick={() => { onHaptic?.(); setSelectedActivity(a.id); }}
+                onClick={() => handleSelectActivity(a.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-medium whitespace-nowrap transition-all duration-300 min-h-[44px] backdrop-blur-md border ${
                   isActive
                     ? 'bg-white/20 text-white shadow-[0_8px_32px_rgba(255,255,255,0.15)] scale-105 border-white/30'
