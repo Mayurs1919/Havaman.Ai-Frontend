@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { getTranslations, LANGUAGES } from '@/utils/translations';
 
 interface VoiceInputProps {
   onTranscript: (text: string) => void;
   isActive: boolean;
   setIsActive: (active: boolean) => void;
   onHaptic?: () => void;
+  language: string;
 }
 
-const VoiceInput = ({ onTranscript, isActive, setIsActive, onHaptic }: VoiceInputProps) => {
+const VoiceInput = ({ onTranscript, isActive, setIsActive, onHaptic, language }: VoiceInputProps) => {
   const [recognition, setRecognition] = useState<any>(null);
+  const t = getTranslations(language);
 
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -18,15 +21,18 @@ const VoiceInput = ({ onTranscript, isActive, setIsActive, onHaptic }: VoiceInpu
       const instance = new SpeechRecognition();
       instance.continuous = false;
       instance.interimResults = false;
-      instance.lang = 'en-US';
+      
+      // Set language based on user preference
+      const languageConfig = LANGUAGES.find(l => l.code === language);
+      instance.lang = languageConfig?.voiceCodes[0] || 'en-US';
 
       instance.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         onTranscript(transcript);
         setIsActive(false);
         toast({
-          title: 'Voice input received',
-          description: `Searching for: ${transcript}`,
+          title: t.voiceReceived,
+          description: `${t.searchingFor}: ${transcript}`,
         });
       };
 
@@ -46,7 +52,7 @@ const VoiceInput = ({ onTranscript, isActive, setIsActive, onHaptic }: VoiceInpu
 
       setRecognition(instance);
     }
-  }, [onTranscript, setIsActive]);
+  }, [onTranscript, setIsActive, language, t]);
 
   const toggle = () => {
     onHaptic?.();
@@ -66,8 +72,8 @@ const VoiceInput = ({ onTranscript, isActive, setIsActive, onHaptic }: VoiceInpu
       recognition.start();
       setIsActive(true);
       toast({
-        title: '🎙️ Listening...',
-        description: 'Speak your location',
+        title: `🎙️ ${t.listening}`,
+        description: t.speakLocation,
       });
     }
   };

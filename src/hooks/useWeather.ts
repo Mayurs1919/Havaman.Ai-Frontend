@@ -38,6 +38,42 @@ export interface WeatherData {
   hourly: HourlyItem[];
 }
 
+const OPENWEATHER_BASE_URL = 'https://api.openweathermap.org/data/2.5';
+
+// Weather condition mapping from OpenWeather to our codes
+const mapWeatherCondition = (weatherMain: string, weatherDescription: string): { condition: string; conditionCode: string } => {
+  const main = weatherMain.toLowerCase();
+  const desc = weatherDescription.toLowerCase();
+  
+  switch (main) {
+    case 'clear':
+      return { condition: 'Clear', conditionCode: 'Clear' };
+    case 'clouds':
+      if (desc.includes('few')) return { condition: 'Partly Cloudy', conditionCode: 'Clouds' };
+      if (desc.includes('scattered') || desc.includes('broken')) return { condition: 'Cloudy', conditionCode: 'Clouds' };
+      return { condition: 'Overcast', conditionCode: 'Clouds' };
+    case 'rain':
+      if (desc.includes('light')) return { condition: 'Light Rain', conditionCode: 'Rain' };
+      if (desc.includes('heavy')) return { condition: 'Heavy Rain', conditionCode: 'Rain' };
+      return { condition: 'Rain', conditionCode: 'Rain' };
+    case 'drizzle':
+      return { condition: 'Drizzle', conditionCode: 'Drizzle' };
+    case 'thunderstorm':
+      return { condition: 'Thunderstorm', conditionCode: 'Thunderstorm' };
+    case 'snow':
+      if (desc.includes('light')) return { condition: 'Light Snow', conditionCode: 'Snow' };
+      if (desc.includes('heavy')) return { condition: 'Heavy Snow', conditionCode: 'Snow' };
+      return { condition: 'Snow', conditionCode: 'Snow' };
+    case 'mist':
+      return { condition: 'Mist', conditionCode: 'Mist' };
+    case 'fog':
+      return { condition: 'Fog', conditionCode: 'Fog' };
+    default:
+      return { condition: weatherDescription, conditionCode: main };
+  }
+};
+
+// Mock data as fallback
 const createMockData = (
   location: string,
   country: string,
@@ -83,26 +119,183 @@ const createMockData = (
   ],
 });
 
-const LOCATION_DB: Record<string, WeatherData> = {
-  'san francisco': createMockData('San Francisco', 'US', 'Clear', 22, 'Sunny', 65, 12, 7, 2),
-  london: createMockData('London', 'UK', 'Rain', 14, 'Rainy', 82, 18, 2, 1),
-  tokyo: createMockData('Tokyo', 'JP', 'Clear', 28, 'Sunny', 70, 8, 8, 3),
-  'new york': createMockData('New York', 'US', 'Clouds', 19, 'Overcast', 72, 22, 4, 2),
-  dubai: createMockData('Dubai', 'UAE', 'Clear', 38, 'Scorching Sun', 45, 15, 11, 2),
-  paris: createMockData('Paris', 'FR', 'Clouds', 16, 'Partly Cloudy', 68, 14, 3, 2),
-  sydney: createMockData('Sydney', 'AU', 'Clear', 26, 'Sunny', 58, 20, 9, 1),
-  mumbai: createMockData('Mumbai', 'IN', 'Rain', 31, 'Humid & Rainy', 90, 25, 6, 4),
-  chicago: createMockData('Chicago', 'US', 'Thunderstorm', 15, 'Thunderstorm', 78, 35, 3, 3),
-  moscow: createMockData('Moscow', 'RU', 'Snow', -5, 'Heavy Snow', 85, 10, 1, 2),
-};
+const DEFAULT_DATA = createMockData('San Francisco', 'US', 'Clear', 22, 'Sunny', 65, 12, 7, 2);
 
-const DEFAULT_DATA = LOCATION_DB['san francisco'];
-
-export const useWeather = () => {
+export const useWeather = (apiKey?: string, temperatureUnit: 'C' | 'F' = 'C') => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [geoStatus, setGeoStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+
+  const convertTemp = useCallback((temp: number) => {
+    if (temperatureUnit === 'F') {
+      return Math.round((temp * 9/5) + 32);
+    }
+    return Math.round(temp);
+  }, [temperatureUnit]);
+
+  const fetchWeatherData = useCallback(async (lat: number, lon: number, locationName?: string): Promise<WeatherData> => {
+    if (!apiKey) {
+      return { ...DEFAULT_DATA, location: locationName || DEFAULT_DATA.location };
+    }
+
+    try {
+      const units = temperatureUnit === 'F' ? 'imperial' : 'metric';
+      
+      // Fetch current weather
+      const currentResponse = await fetch(
+        `${OPENWEATHER_BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=${units}`
+      );
+      
+      if (!currentResponse.ok) {
+        throw new Error(`Weather API error: ${currentResponse.status}`);
+      }
+      
+      const currentData = await currentResponse.json();
+      
+      // Fetch forecast
+      const forecastResponse = await fetch(
+        `${OPENWEATHER_BASE_URL}/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=${units}`
+      );
+      
+      if (!forecastResponse.ok) {
+        throw new Error(`Forecast API error: ${forecastResponse.status}`);
+      }
+      
+      const forecastData = await forecastResponse.json();
+      
+      // Fetch UV Index (requires One Call API)
+      let uvIndex = 5; // fallback
+      try {
+        const uvResponse = await fetch(
+          `${OPENWEATHER_BASE_URL}/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`
+        );
+        if (uvResponse.ok) {
+          const uvData = await uvResponse.json();
+          uvIndex = Math.round(uvData.value || 5);
+        }
+      } catch (e) {
+        console.warn('UV data unavailable');
+      }
+      
+      // Fetch Air Quality
+      let airQuality = 2; // fallback
+      try {
+        const aqResponse = await fetch(
+          `${OPENWEATHER_BASE_URL}/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`
+        );
+        if (aqResponse.ok) {
+          const aqData = await aqResponse.json();
+          airQuality = aqData.list[0]?.main?.aqi || 2;
+        }
+      } catch (e) {
+        console.warn('Air quality data unavailable');
+      }
+
+      const { condition, conditionCode } = mapWeatherCondition(
+        currentData.weather[0].main,
+        currentData.weather[0].description
+      );
+
+      // Process hourly forecast (next 8 hours)
+      const hourly: HourlyItem[] = forecastData.list.slice(0, 8).map((item: any, index: number) => {
+        const { condition: hourCondition, conditionCode: hourCode } = mapWeatherCondition(
+          item.weather[0].main,
+          item.weather[0].description
+        );
+        
+        return {
+          time: index === 0 ? 'Now' : `+${index}h`,
+          temp: Math.round(item.main.temp),
+          condition: hourCondition,
+          conditionCode: hourCode,
+        };
+      });
+
+      // Process 5-day forecast
+      const dailyForecasts = new Map();
+      const today = new Date().toDateString();
+      
+      forecastData.list.forEach((item: any) => {
+        const date = new Date(item.dt * 1000);
+        const dateStr = date.toDateString();
+        
+        if (!dailyForecasts.has(dateStr)) {
+          const { condition: dayCondition, conditionCode: dayCode } = mapWeatherCondition(
+            item.weather[0].main,
+            item.weather[0].description
+          );
+          
+          dailyForecasts.set(dateStr, {
+            day: dateStr === today ? 'Today' : date.toLocaleDateString('en', { weekday: 'short' }),
+            high: Math.round(item.main.temp_max),
+            low: Math.round(item.main.temp_min),
+            condition: dayCondition,
+            conditionCode: dayCode,
+            precipChance: Math.round((item.pop || 0) * 100),
+          });
+        } else {
+          const existing = dailyForecasts.get(dateStr);
+          existing.high = Math.max(existing.high, Math.round(item.main.temp_max));
+          existing.low = Math.min(existing.low, Math.round(item.main.temp_min));
+          existing.precipChance = Math.max(existing.precipChance, Math.round((item.pop || 0) * 100));
+        }
+      });
+
+      const forecast = Array.from(dailyForecasts.values()).slice(0, 5);
+
+      return {
+        location: locationName || currentData.name,
+        country: currentData.sys.country,
+        conditionCode,
+        current: {
+          temperature: Math.round(currentData.main.temp),
+          feelsLike: Math.round(currentData.main.feels_like),
+          condition,
+          conditionCode,
+          humidity: currentData.main.humidity,
+          windSpeed: Math.round(currentData.wind.speed * 3.6), // m/s to km/h
+          uvIndex,
+          visibility: Math.round((currentData.visibility || 10000) / 1000), // m to km
+          pressure: currentData.main.pressure,
+          airQuality,
+        },
+        forecast,
+        hourly,
+      };
+      
+    } catch (error) {
+      console.error('Weather API Error:', error);
+      return { ...DEFAULT_DATA, location: locationName || DEFAULT_DATA.location };
+    }
+  }, [apiKey, temperatureUnit]);
+
+  const geocodeLocation = useCallback(async (locationQuery: string): Promise<{ lat: number; lon: number; name: string } | null> => {
+    if (!apiKey) {
+      return { lat: 37.7749, lon: -122.4194, name: locationQuery };
+    }
+
+    try {
+      const response = await fetch(
+        `${OPENWEATHER_BASE_URL}/geocoding/direct?q=${encodeURIComponent(locationQuery)}&limit=1&appid=${apiKey}`
+      );
+      
+      if (!response.ok) return null;
+      
+      const data = await response.json();
+      if (data.length === 0) return null;
+      
+      const location = data[0];
+      return {
+        lat: location.lat,
+        lon: location.lon,
+        name: `${location.name}${location.state ? ', ' + location.state : ''}`,
+      };
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      return null;
+    }
+  }, [apiKey]);
 
   useEffect(() => {
     if (geoStatus !== 'idle') return;
@@ -110,13 +303,21 @@ export const useWeather = () => {
     if (navigator.geolocation) {
       setGeoStatus('loading');
       navigator.geolocation.getCurrentPosition(
-        () => {
+        async (position) => {
           setGeoStatus('done');
           setIsLoading(true);
-          setTimeout(() => {
+          try {
+            const data = await fetchWeatherData(
+              position.coords.latitude,
+              position.coords.longitude
+            );
+            setWeatherData(data);
+          } catch (error) {
+            console.error('Failed to fetch weather data:', error);
             setWeatherData(DEFAULT_DATA);
+          } finally {
             setIsLoading(false);
-          }, 1500);
+          }
         },
         () => {
           setGeoStatus('error');
@@ -126,19 +327,28 @@ export const useWeather = () => {
     } else {
       setGeoStatus('error');
     }
-  }, [geoStatus]);
+  }, [geoStatus, fetchWeatherData]);
 
-  const searchWeather = useCallback((query: string) => {
+  const searchWeather = useCallback(async (query: string) => {
     if (!query.trim()) return;
     setIsLoading(true);
     
-    setTimeout(() => {
-      const key = Object.keys(LOCATION_DB).find(k => query.toLowerCase().includes(k));
-      const data = key ? LOCATION_DB[key] : { ...DEFAULT_DATA, location: query.split(',')[0].trim() };
-      setWeatherData(data);
+    try {
+      const location = await geocodeLocation(query);
+      if (location) {
+        const data = await fetchWeatherData(location.lat, location.lon, location.name);
+        setWeatherData(data);
+      } else {
+        // Fallback to mock data with the query as location name
+        setWeatherData({ ...DEFAULT_DATA, location: query.split(',')[0].trim() });
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      setWeatherData({ ...DEFAULT_DATA, location: query.split(',')[0].trim() });
+    } finally {
       setIsLoading(false);
-    }, 1200);
-  }, []);
+    }
+  }, [geocodeLocation, fetchWeatherData]);
 
   return {
     weatherData,

@@ -1,11 +1,14 @@
 import React from 'react';
+import { getTranslations } from '@/utils/translations';
 
 interface RadarViewProps {
   conditionCode: string;
   location: string;
+  language: string;
 }
 
-const RadarView = ({ conditionCode, location }: RadarViewProps) => {
+const RadarView = ({ conditionCode, location, language }: RadarViewProps) => {
+  const t = getTranslations(language);
   const isRainy = ['Rain', 'Drizzle', 'Thunderstorm'].includes(conditionCode);
   const isSnowy = conditionCode === 'Snow';
   const isClear = conditionCode === 'Clear';
@@ -13,7 +16,7 @@ const RadarView = ({ conditionCode, location }: RadarViewProps) => {
   return (
     <div className="px-4 pb-4">
       <h3 className="text-white/80 text-sm font-semibold uppercase tracking-wider mb-3">
-        Live Radar
+        {t.liveRadar}
       </h3>
       <div className="glass-card rounded-3xl overflow-hidden aspect-square relative flex items-center justify-center">
         <div className="absolute inset-0 radar-grid" />

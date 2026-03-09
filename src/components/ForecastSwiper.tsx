@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { HourlyItem, ForecastItem } from '@/hooks/useWeather';
+import { getTranslations, translateWeatherCondition } from '@/utils/translations';
 
 const getWeatherEmoji = (conditionCode: string): string => {
   const map: Record<string, string> = {
@@ -19,11 +20,13 @@ interface ForecastSwiperProps {
   hourly: HourlyItem[];
   forecast: ForecastItem[];
   onHaptic?: () => void;
+  language: string;
 }
 
-const ForecastSwiper = ({ hourly, forecast, onHaptic }: ForecastSwiperProps) => {
+const ForecastSwiper = ({ hourly, forecast, onHaptic, language }: ForecastSwiperProps) => {
   const [activeTab, setActiveTab] = useState<'hourly' | 'daily'>('hourly');
   const touchStartX = useRef(0);
+  const t = getTranslations(language);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -53,7 +56,7 @@ const ForecastSwiper = ({ hourly, forecast, onHaptic }: ForecastSwiperProps) => 
               : 'text-white/60'
           }`}
         >
-          Hourly
+          {t.hourly}
         </button>
         <button
           onClick={() => { setActiveTab('daily'); onHaptic?.(); }}
@@ -63,7 +66,7 @@ const ForecastSwiper = ({ hourly, forecast, onHaptic }: ForecastSwiperProps) => 
               : 'text-white/60'
           }`}
         >
-          5-Day
+          {t.daily}
         </button>
       </div>
 
