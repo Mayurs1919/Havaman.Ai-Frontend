@@ -27,6 +27,10 @@ export interface HourlyItem {
   temp: number;
   condition: string;
   conditionCode: string;
+  windSpeed?: number;
+  precipChance?: number;
+  cloudCover?: number;
+  hour?: number;
 }
 
 export interface WeatherData {
@@ -203,12 +207,17 @@ export const useWeather = (apiKey?: string, temperatureUnit: 'C' | 'F' = 'C') =>
           item.weather[0].main,
           item.weather[0].description
         );
+        const date = new Date(item.dt * 1000);
         
         return {
           time: index === 0 ? 'Now' : `+${index}h`,
           temp: Math.round(item.main.temp),
           condition: hourCondition,
           conditionCode: hourCode,
+          windSpeed: Math.round((item.wind?.speed || 0) * 3.6),
+          precipChance: Math.round((item.pop || 0) * 100),
+          cloudCover: item.clouds?.all || 0,
+          hour: date.getHours(),
         };
       });
 
