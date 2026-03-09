@@ -249,6 +249,7 @@ const WeatherDashboard = () => {
                 onHaptic={() => haptic(30)}
                 language={language}
               />
+              <WeatherWindow hourly={weatherData.hourly} language={language} onHaptic={() => haptic(30)} />
               <RadarView conditionCode={conditionCode} location={weatherData.location} language={language} />
             </>
           ) : (
