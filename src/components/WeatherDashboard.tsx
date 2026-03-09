@@ -5,6 +5,7 @@ import WeatherInsights from './WeatherInsights';
 import ForecastSwiper from './ForecastSwiper';
 import RadarView from './RadarView';
 import SettingsModal from './SettingsModal';
+import WeatherParticles from './WeatherParticles';
 import { useWeather } from '@/hooks/useWeather';
 import { toast } from '@/hooks/use-toast';
 import { getTranslations, translateWeatherCondition, detectBrowserLanguage } from '@/utils/translations';
@@ -152,9 +153,19 @@ const WeatherDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const getGreeting = (): string => {
+    switch (timeOfDay) {
+      case 'morning': return t.goodMorning;
+      case 'afternoon': return t.goodAfternoon;
+      case 'dusk': case 'evening': return t.goodEvening;
+      default: return t.goodNight;
+    }
+  };
+
   return (
     <div data-weather={conditionCode} data-timeofday={timeOfDay} className="weather-app max-w-[480px] mx-auto relative min-h-screen">
       <div className="weather-bg" />
+      <WeatherParticles conditionCode={conditionCode} timeOfDay={timeOfDay} />
       
       <div className="relative z-10 flex flex-col min-h-screen">
         <div className="flex-1 overflow-y-auto pb-28 pt-safe">
@@ -162,6 +173,7 @@ const WeatherDashboard = () => {
           {weatherData ? (
             <>
               <div className="px-4 pt-10 pb-6 text-center">
+                <p className="text-white/70 text-sm font-medium mb-3 animate-[fade-in_0.5s_ease-out]">{getGreeting()} ☀️</p>
                 <div className="flex items-center justify-center gap-1.5 text-white/80 mb-2">
                   <MapPin className="w-4 h-4" />
                   <span className="text-sm font-medium">{weatherData.location}, {weatherData.country}</span>
