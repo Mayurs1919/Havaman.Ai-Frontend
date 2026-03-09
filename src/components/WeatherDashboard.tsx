@@ -6,6 +6,7 @@ import ForecastSwiper from './ForecastSwiper';
 import RadarView from './RadarView';
 import SettingsModal from './SettingsModal';
 import WeatherParticles from './WeatherParticles';
+import WeatherWindow from './WeatherWindow';
 import { useWeather } from '@/hooks/useWeather';
 import { toast } from '@/hooks/use-toast';
 import { getTranslations, translateWeatherCondition, detectBrowserLanguage } from '@/utils/translations';

@@ -112,14 +112,14 @@ const createMockData = (
     { day: 'Fri', high: temp + 1, low: temp - 5, condition: 'Sunny', conditionCode: 'Clear', precipChance: 5 },
   ],
   hourly: [
-    { time: 'Now', temp, condition, conditionCode },
-    { time: '+1h', temp: temp + 1, condition, conditionCode },
-    { time: '+2h', temp: temp + 2, condition: 'Partly Cloudy', conditionCode: 'Clouds' },
-    { time: '+3h', temp: temp + 2, condition: 'Partly Cloudy', conditionCode: 'Clouds' },
-    { time: '+4h', temp: temp + 1, condition: 'Cloudy', conditionCode: 'Clouds' },
-    { time: '+5h', temp, condition: 'Cloudy', conditionCode: 'Clouds' },
-    { time: '+6h', temp: temp - 1, condition: 'Cloudy', conditionCode: 'Clouds' },
-    { time: '+7h', temp: temp - 2, condition, conditionCode },
+    { time: 'Now', temp, condition, conditionCode, windSpeed: wind, precipChance: conditionCode === 'Rain' ? 60 : 0, cloudCover: conditionCode === 'Clouds' ? 70 : 20, hour: new Date().getHours() },
+    { time: '+1h', temp: temp + 1, condition, conditionCode, windSpeed: wind + 2, precipChance: conditionCode === 'Rain' ? 50 : 0, cloudCover: 25, hour: (new Date().getHours() + 1) % 24 },
+    { time: '+2h', temp: temp + 2, condition: 'Partly Cloudy', conditionCode: 'Clouds', windSpeed: wind, precipChance: 5, cloudCover: 40, hour: (new Date().getHours() + 2) % 24 },
+    { time: '+3h', temp: temp + 2, condition: 'Partly Cloudy', conditionCode: 'Clouds', windSpeed: wind - 2, precipChance: 0, cloudCover: 35, hour: (new Date().getHours() + 3) % 24 },
+    { time: '+4h', temp: temp + 1, condition: 'Cloudy', conditionCode: 'Clouds', windSpeed: wind + 3, precipChance: 10, cloudCover: 60, hour: (new Date().getHours() + 4) % 24 },
+    { time: '+5h', temp, condition: 'Cloudy', conditionCode: 'Clouds', windSpeed: wind + 1, precipChance: 20, cloudCover: 70, hour: (new Date().getHours() + 5) % 24 },
+    { time: '+6h', temp: temp - 1, condition: 'Cloudy', conditionCode: 'Clouds', windSpeed: wind, precipChance: 30, cloudCover: 80, hour: (new Date().getHours() + 6) % 24 },
+    { time: '+7h', temp: temp - 2, condition, conditionCode, windSpeed: wind - 1, precipChance: 5, cloudCover: 30, hour: (new Date().getHours() + 7) % 24 },
   ],
 });
 
