@@ -160,10 +160,10 @@ const WeatherWindow: React.FC<WeatherWindowProps> = ({ hourly, language, onHapti
               <button
                 key={a.id}
                 onClick={() => { onHaptic?.(); setSelectedActivity(a.id); }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all min-h-[44px] ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-medium whitespace-nowrap transition-all duration-300 min-h-[44px] backdrop-blur-md border ${
                   isActive
-                    ? 'bg-white/25 text-white shadow-lg scale-105'
-                    : 'bg-white/8 text-white/60 hover:bg-white/15 hover:text-white/80'
+                    ? 'bg-white/20 text-white shadow-[0_8px_32px_rgba(255,255,255,0.15)] scale-105 border-white/30'
+                    : 'bg-white/[0.06] text-white/60 hover:bg-white/[0.12] hover:text-white/80 border-white/[0.08] hover:border-white/20 hover:shadow-[0_4px_16px_rgba(255,255,255,0.06)]'
                 }`}
               >
                 <span className="text-base">{a.icon}</span>
@@ -174,14 +174,14 @@ const WeatherWindow: React.FC<WeatherWindowProps> = ({ hourly, language, onHapti
         </div>
 
         {/* Best Window Card */}
-        <div className="bg-white/6 rounded-xl p-4 space-y-3">
+        <div className="rounded-2xl p-4 space-y-3 bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] shadow-[0_8px_32px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.1)]">
           {bestHour && result.bestScore > 20 ? (
             <>
               <p className="text-white/50 text-xs uppercase tracking-wider">
                 {BEST_TIME_LABELS[lang] || BEST_TIME_LABELS.en} {ACTIVITY_LABELS[selectedActivity]?.[lang] || selectedActivity}
               </p>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-2xl">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 backdrop-blur-sm border border-emerald-400/20 flex items-center justify-center text-2xl shadow-[0_4px_12px_rgba(16,185,129,0.15)]">
                   {activityCriteria.find(a => a.id === selectedActivity)?.icon}
                 </div>
                 <div className="flex-1">
@@ -209,26 +209,28 @@ const WeatherWindow: React.FC<WeatherWindowProps> = ({ hourly, language, onHapti
             <p className="text-white/50 text-xs">{SCORE_LABEL[lang] || SCORE_LABEL.en}</p>
             <p className="text-white text-xs font-semibold">{currentScore}%</p>
           </div>
-          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-2.5 bg-white/[0.06] rounded-full overflow-hidden backdrop-blur-sm border border-white/[0.08]">
             <div
-              className="h-full rounded-full transition-all duration-700 ease-out"
+              className="h-full rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_rgba(0,0,0,0.2)]"
               style={{
                 width: `${currentScore}%`,
                 background: `linear-gradient(90deg, ${getScoreColor(currentScore)}, ${getScoreColor(Math.min(100, currentScore + 20))})`,
+                boxShadow: `0 0 12px ${getScoreColor(currentScore)}40`,
               }}
             />
           </div>
         </div>
 
         {/* Hourly score timeline */}
-        <div className="flex items-end gap-1 h-10">
+        <div className="flex items-end gap-1.5 h-12 px-1 py-2 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-white/[0.06]">
           {result.scores.map((score, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
               <div
                 className="w-full rounded-sm transition-all duration-500"
                 style={{
                   height: `${Math.max(4, (score / 100) * 32)}px`,
-                  backgroundColor: i === result.bestIndex ? getScoreColor(score) : `rgba(255,255,255,${0.1 + score / 300})`,
+                  backgroundColor: i === result.bestIndex ? getScoreColor(score) : `rgba(255,255,255,${0.08 + score / 400})`,
+                  boxShadow: i === result.bestIndex ? `0 0 8px ${getScoreColor(score)}50` : 'none',
                 }}
               />
               <span className="text-[9px] text-white/40">{hourly[i]?.time?.replace('+', '')}</span>
@@ -239,10 +241,10 @@ const WeatherWindow: React.FC<WeatherWindowProps> = ({ hourly, language, onHapti
         {/* Notify Me button */}
         <button
           onClick={handleNotify}
-          className={`w-full py-3 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
+          className={`w-full py-3 rounded-2xl text-sm font-medium transition-all duration-300 min-h-[44px] backdrop-blur-md border ${
             notifiedActivities.has(selectedActivity)
-              ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-400/30'
-              : 'bg-white/10 text-white/80 hover:bg-white/15 border border-white/10'
+              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-400/25 shadow-[0_4px_20px_rgba(16,185,129,0.15),inset_0_1px_0_rgba(255,255,255,0.1)]'
+              : 'bg-white/[0.07] text-white/80 hover:bg-white/[0.12] border-white/[0.1] hover:border-white/20 shadow-[0_4px_16px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.06)]'
           }`}
         >
           {notifiedActivities.has(selectedActivity) ? '🔔 ' : '🔕 '}
