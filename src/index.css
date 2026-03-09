@@ -244,4 +244,9 @@
     0%, 100% { opacity: 0.5; transform: rotate(var(--tw-rotate, 0deg)) scaleY(0.9); }
     50% { opacity: 1; transform: rotate(var(--tw-rotate, 0deg)) scaleY(1.1); }
   }
+
+  @keyframes cardSwitch {
+    0% { opacity: 0; transform: scale(0.96) translateY(6px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
 }
