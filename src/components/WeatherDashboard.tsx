@@ -6,6 +6,7 @@ import ForecastSwiper from './ForecastSwiper';
 import RadarView from './RadarView';
 import SettingsModal from './SettingsModal';
 import WeatherParticles from './WeatherParticles';
+import WeatherWindow from './WeatherWindow';
 import { useWeather } from '@/hooks/useWeather';
 import { toast } from '@/hooks/use-toast';
 import { getTranslations, translateWeatherCondition, detectBrowserLanguage } from '@/utils/translations';
@@ -248,6 +249,7 @@ const WeatherDashboard = () => {
                 onHaptic={() => haptic(30)}
                 language={language}
               />
+              <WeatherWindow hourly={weatherData.hourly} language={language} onHaptic={() => haptic(30)} />
               <RadarView conditionCode={conditionCode} location={weatherData.location} language={language} />
             </>
           ) : (
