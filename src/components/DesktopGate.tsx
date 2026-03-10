@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { QrCode, Cloud, Thermometer, Wind, Droplets, Sun, CloudRain, Zap, Eye } from 'lucide-react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Cloud, Thermometer, Wind, Droplets, Eye, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { lovable } from '@/integrations/lovable';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-
-const APP_URL = 'https://id-preview--b28ae43e-61e9-488b-9b8b-111129eaf0f5.lovable.app';
+import GateWeatherAnimation from './GateWeatherAnimation';
 
 const features = [
   { icon: Thermometer, label: 'Real-time Forecasts', desc: 'Accurate weather predictions powered by AI' },
@@ -14,20 +14,13 @@ const features = [
   { icon: Eye, label: 'AI Weather Insights', desc: 'Personalized weather intelligence' },
 ];
 
-const floatingIcons = [
-  { Icon: Sun, x: '10%', y: '15%', size: 28, delay: 0, duration: 6 },
-  { Icon: CloudRain, x: '85%', y: '20%', size: 24, delay: 1, duration: 7 },
-  { Icon: Wind, x: '75%', y: '70%', size: 22, delay: 2, duration: 5 },
-  { Icon: Droplets, x: '15%', y: '75%', size: 20, delay: 0.5, duration: 8 },
-  { Icon: Cloud, x: '50%', y: '8%', size: 30, delay: 1.5, duration: 6 },
-  { Icon: Zap, x: '90%', y: '50%', size: 18, delay: 3, duration: 7 },
-];
-
 const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isDesktop, setIsDesktop] = useState(false);
   const [bypass, setBypass] = useState(false);
   const [activeTab, setActiveTab] = useState<'google' | 'qr'>('google');
   const [signingIn, setSigningIn] = useState(false);
+  const [qrToken, setQrToken] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -62,22 +55,97 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   };
 
+  // Create QR session and start polling
+  const createQrSession = useCallback(async () => {
+    setQrLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('qr_login_sessions')
+        .insert({})
+        .select('token')
+        .single();
+
+      if (error || !data) {
+        toast({ title: 'Failed to generate QR code', variant: 'destructive' });
+        return;
+      }
+      setQrToken(data.token);
+    } catch {
+      toast({ title: 'Failed to generate QR code', variant: 'destructive' });
+    } finally {
+      setQrLoading(false);
+    }
+  }, []);
+
+  // Generate QR when tab switches to qr
+  useEffect(() => {
+    if (activeTab === 'qr' && !qrToken) {
+      createQrSession();
+    }
+  }, [activeTab, qrToken, createQrSession]);
+
+  // Listen for QR session authentication via realtime
+  useEffect(() => {
+    if (!qrToken) return;
+
+    const channel = supabase
+      .channel(`qr-${qrToken}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'qr_login_sessions',
+        filter: `token=eq.${qrToken}`,
+      }, async (payload: any) => {
+        if (payload.new.status === 'authenticated' && payload.new.user_id) {
+          // Session authenticated on mobile — sign in via a custom token exchange
+          // For now, we show success and redirect
+          toast({ title: 'Signed in via mobile!' });
+          setBypass(true);
+        }
+      })
+      .subscribe();
+
+    // Also poll as fallback
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from('qr_login_sessions')
+        .select('status, user_id')
+        .eq('token', qrToken)
+        .single();
+
+      if (data?.status === 'authenticated') {
+        toast({ title: 'Signed in via mobile!' });
+        setBypass(true);
+        clearInterval(interval);
+      }
+    }, 3000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
+  }, [qrToken]);
+
+  // Regenerate token every 4.5 min
+  useEffect(() => {
+    if (!qrToken) return;
+    const timer = setTimeout(() => {
+      setQrToken(null);
+      if (activeTab === 'qr') createQrSession();
+    }, 270000);
+    return () => clearTimeout(timer);
+  }, [qrToken, activeTab, createQrSession]);
+
+  const qrUrl = qrToken
+    ? `${window.location.origin}/qr-auth?token=${qrToken}`
+    : '';
+
   if (!isDesktop || bypass) return <>{children}</>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0e27] via-[#0d1942] to-[#0a1628] relative overflow-hidden">
-      {/* Floating weather icons */}
-      {floatingIcons.map(({ Icon, x, y, size, delay, duration }, i) => (
-        <motion.div
-          key={i}
-          className="absolute text-white/[0.06] pointer-events-none"
-          style={{ left: x, top: y }}
-          animate={{ y: [0, -20, 0], rotate: [0, 10, -10, 0], opacity: [0.04, 0.1, 0.04] }}
-          transition={{ duration, delay, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <Icon size={size} />
-        </motion.div>
-      ))}
+      {/* Weather animation background */}
+      <GateWeatherAnimation />
 
       {/* Radial glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-blue-500/[0.04] blur-[120px] pointer-events-none" />
@@ -90,7 +158,6 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
           >
-            {/* Logo */}
             <div className="flex items-center gap-2 mb-8">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <Cloud className="w-6 h-6 text-white" />
@@ -109,11 +176,10 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </span>
             </h1>
             <p className="text-white/50 text-lg max-w-md mb-12 leading-relaxed">
-              Experience intelligent weather forecasting with real-time AI insights, 
+              Experience intelligent weather forecasting with real-time AI insights,
               personalized alerts, and beautiful visualizations.
             </p>
 
-            {/* Feature grid */}
             <div className="grid grid-cols-2 gap-4 max-w-lg">
               {features.map((f, i) => (
                 <motion.div
@@ -169,7 +235,7 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       activeTab === tab ? 'text-white' : 'text-white/40 hover:text-white/60'
                     }`}
                   >
-                    {tab === 'google' ? 'Sign in with Google' : 'QR Code'}
+                    {tab === 'google' ? 'Sign in with Google' : 'QR Code Login'}
                     {activeTab === tab && (
                       <motion.div
                         layoutId="tab-indicator"
@@ -213,7 +279,7 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
                       <div className="flex items-center gap-3">
                         <div className="flex-1 h-px bg-white/[0.08]" />
-                        <span className="text-white/30 text-xs">or scan QR on mobile</span>
+                        <span className="text-white/30 text-xs">or use QR code login</span>
                         <div className="flex-1 h-px bg-white/[0.08]" />
                       </div>
 
@@ -231,28 +297,39 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       className="space-y-6"
                     >
                       <div className="text-center space-y-2">
-                        <h2 className="text-xl font-bold text-white">Open on Mobile</h2>
-                        <p className="text-white/40 text-sm">Scan with your phone camera for the best experience</p>
+                        <h2 className="text-xl font-bold text-white">Scan to Sign In</h2>
+                        <p className="text-white/40 text-sm">Scan with your phone to authenticate this desktop session</p>
                       </div>
 
                       <div className="flex justify-center">
-                        <motion.div
-                          initial={{ scale: 0.9, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ duration: 0.4, delay: 0.1 }}
-                          className="bg-white rounded-2xl p-3 shadow-2xl shadow-blue-500/10"
-                        >
-                          <img
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(APP_URL)}&color=0d1942&bgcolor=ffffff&qzone=2`}
-                            alt="QR Code to open Havaman.Ai on mobile"
-                            className="w-44 h-44"
-                          />
-                        </motion.div>
+                        {qrLoading ? (
+                          <div className="w-44 h-44 flex items-center justify-center">
+                            <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+                          </div>
+                        ) : qrUrl ? (
+                          <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.4, delay: 0.1 }}
+                            className="bg-white rounded-2xl p-3 shadow-2xl shadow-blue-500/10"
+                          >
+                            <img
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}&color=0d1942&bgcolor=ffffff&qzone=2`}
+                              alt="QR Code to sign in via mobile"
+                              className="w-44 h-44"
+                            />
+                          </motion.div>
+                        ) : null}
                       </div>
 
-                      <div className="flex items-center justify-center gap-2 text-white/40 text-xs">
-                        <QrCode className="w-3.5 h-3.5" />
-                        <span>Works with iOS & Android cameras</span>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-center gap-2 text-white/40 text-xs">
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                          <span>Waiting for mobile authentication...</span>
+                        </div>
+                        <p className="text-center text-white/30 text-[11px]">
+                          QR code refreshes automatically every 5 minutes
+                        </p>
                       </div>
                     </motion.div>
                   )}
