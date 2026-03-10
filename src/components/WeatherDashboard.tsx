@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Volume2, VolumeX, MapPin, Wind, Droplets, Eye, Gauge, Settings } from 'lucide-react';
+import { motion } from 'framer-motion';
 import VoiceInput from './VoiceInput';
 import WeatherInsights from './WeatherInsights';
 import ForecastSwiper from './ForecastSwiper';
@@ -14,13 +15,8 @@ import { getTranslations, translateWeatherCondition, detectBrowserLanguage } fro
 
 const getWeatherEmoji = (conditionCode: string): string => {
   const map: Record<string, string> = {
-    Clear: '☀️',
-    Clouds: '☁️',
-    Rain: '🌧️',
-    Drizzle: '🌦️',
-    Thunderstorm: '⛈️',
-    Snow: '❄️',
-    Mist: '🌫️',
+    Clear: '☀️', Clouds: '☁️', Rain: '🌧️', Drizzle: '🌦️',
+    Thunderstorm: '⛈️', Snow: '❄️', Mist: '🌫️',
   };
   return map[conditionCode] || '🌤️';
 };
@@ -38,21 +34,15 @@ const getUVLabel = (uv: number, t: any): string => {
 };
 
 const WeatherDashboard = () => {
-  // Settings state
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('weather-api-key') || '');
   const [language, setLanguage] = useState(() => localStorage.getItem('weather-language') || detectBrowserLanguage());
-  const [temperatureUnit, setTemperatureUnit] = useState<'C' | 'F'>(() => 
+  const [temperatureUnit, setTemperatureUnit] = useState<'C' | 'F'>(() =>
     (localStorage.getItem('weather-temp-unit') as 'C' | 'F') || 'C'
   );
-  const [enableHaptics, setEnableHaptics] = useState(() => 
-    localStorage.getItem('weather-haptics') !== 'false'
-  );
-  const [enableTTS, setEnableTTS] = useState(() => 
-    localStorage.getItem('weather-tts') !== 'false'
-  );
+  const [enableHaptics, setEnableHaptics] = useState(() => localStorage.getItem('weather-haptics') !== 'false');
+  const [enableTTS, setEnableTTS] = useState(() => localStorage.getItem('weather-tts') !== 'false');
   const [showSettings, setShowSettings] = useState(false);
 
-  // Component state
   const { weatherData, isLoading, searchText, setSearchText, searchWeather, geoStatus } = useWeather(apiKey || undefined, temperatureUnit);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -60,71 +50,35 @@ const WeatherDashboard = () => {
 
   const t = getTranslations(language);
 
-  // Save settings to localStorage
-  useEffect(() => {
-    localStorage.setItem('weather-api-key', apiKey);
-  }, [apiKey]);
-
-  useEffect(() => {
-    localStorage.setItem('weather-language', language);
-  }, [language]);
-
-  useEffect(() => {
-    localStorage.setItem('weather-temp-unit', temperatureUnit);
-  }, [temperatureUnit]);
-
-  useEffect(() => {
-    localStorage.setItem('weather-haptics', enableHaptics.toString());
-  }, [enableHaptics]);
-
-  useEffect(() => {
-    localStorage.setItem('weather-tts', enableTTS.toString());
-  }, [enableTTS]);
+  useEffect(() => { localStorage.setItem('weather-api-key', apiKey); }, [apiKey]);
+  useEffect(() => { localStorage.setItem('weather-language', language); }, [language]);
+  useEffect(() => { localStorage.setItem('weather-temp-unit', temperatureUnit); }, [temperatureUnit]);
+  useEffect(() => { localStorage.setItem('weather-haptics', enableHaptics.toString()); }, [enableHaptics]);
+  useEffect(() => { localStorage.setItem('weather-tts', enableTTS.toString()); }, [enableTTS]);
 
   const haptic = (pattern: number | number[] = 50) => {
-    if ('vibrate' in navigator && enableHaptics) {
-      navigator.vibrate(pattern);
-    }
+    if ('vibrate' in navigator && enableHaptics) navigator.vibrate(pattern);
   };
 
-  const handleSearch = () => {
-    haptic(30);
-    searchWeather(searchText);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSearch();
-  };
-
-  const handleVoiceTranscript = (text: string) => {
-    setSearchText(text);
-    searchWeather(text);
-  };
+  const handleSearch = () => { haptic(30); searchWeather(searchText); };
+  const handleKeyPress = (e: React.KeyboardEvent) => { if (e.key === 'Enter') handleSearch(); };
+  const handleVoiceTranscript = (text: string) => { setSearchText(text); searchWeather(text); };
 
   const toggleSpeak = () => {
     if (!enableTTS) return;
-    
     haptic(40);
     if (!('speechSynthesis' in window)) {
       toast({ title: 'TTS not supported', variant: 'destructive' });
       return;
     }
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-      return;
-    }
-
+    if (isSpeaking) { window.speechSynthesis.cancel(); setIsSpeaking(false); return; }
     if (!weatherData) return;
 
     const { current, location } = weatherData;
-    const aqiLabel = getAQILabel(current.airQuality, t);
-    const uvLabel = getUVLabel(current.uvIndex, t);
     const tempUnit = temperatureUnit === 'F' ? 'Fahrenheit' : 'Celsius';
     const speedUnit = temperatureUnit === 'F' ? 'miles per hour' : 'kilometers per hour';
     const translatedCondition = translateWeatherCondition(current.condition, language);
-    
-    const text = `${t.current} in ${location}: ${current.temperature} degrees ${tempUnit}, ${translatedCondition}. ${t.feelsLike} ${current.feelsLike} degrees. ${t.humidity} ${current.humidity} percent. ${t.windSpeed} ${current.windSpeed} ${speedUnit}. UV ${t.uvIndex} ${current.uvIndex}, ${uvLabel}. ${t.airQuality} ${aqiLabel}.`;
+    const text = `${t.current} in ${location}: ${current.temperature} degrees ${tempUnit}, ${translatedCondition}. ${t.feelsLike} ${current.feelsLike} degrees. ${t.humidity} ${current.humidity} percent. ${t.windSpeed} ${current.windSpeed} ${speedUnit}.`;
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 0.9;
@@ -149,7 +103,6 @@ const WeatherDashboard = () => {
   };
 
   const [timeOfDay, setTimeOfDay] = useState(getTimeOfDay());
-
   useEffect(() => {
     const interval = setInterval(() => setTimeOfDay(getTimeOfDay()), 60000);
     return () => clearInterval(interval);
@@ -168,56 +121,70 @@ const WeatherDashboard = () => {
     <div data-weather={conditionCode} data-timeofday={timeOfDay} className="weather-app max-w-[480px] mx-auto relative min-h-screen">
       <div className="weather-bg" />
       <WeatherParticles conditionCode={conditionCode} timeOfDay={timeOfDay} />
-      
+
       <div className="relative z-10 flex flex-col min-h-screen">
         <AppHeader />
         <div className="flex-1 overflow-y-auto pb-28">
-          
+
           {weatherData ? (
             <>
-              <div className="px-4 pt-10 pb-6 text-center">
-                <p className="text-white/70 text-sm font-medium mb-3 animate-[fade-in_0.5s_ease-out]">{getGreeting()} ☀️</p>
-                <div className="flex items-center justify-center gap-1.5 text-white/80 mb-2">
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-sm font-medium">{weatherData.location}, {weatherData.country}</span>
+              {/* Hero temperature display */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="px-4 pt-8 pb-6 text-center"
+              >
+                <p className="text-white/60 text-sm font-medium mb-3" style={{ fontFamily: 'var(--font-body)' }}>
+                  {getGreeting()} ☀️
+                </p>
+                <div className="flex items-center justify-center gap-1.5 text-white/70 mb-3">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span className="text-sm font-medium" style={{ fontFamily: 'var(--font-body)' }}>
+                    {weatherData.location}, {weatherData.country}
+                  </span>
                 </div>
-                <div className="text-[88px] leading-none font-thin text-white mb-2">
+                <div className="text-[80px] leading-none mb-2 animate-float-slow">
                   {getWeatherEmoji(conditionCode)}
                 </div>
-                <div className="text-[72px] leading-none font-extralight text-white mb-1">
-                  {weatherData.current.temperature}°{temperatureUnit}
+                <div className="text-[68px] leading-none font-extralight text-white mb-1" style={{ fontFamily: 'var(--font-heading)' }}>
+                  {weatherData.current.temperature}°<span className="text-3xl text-white/50">{temperatureUnit}</span>
                 </div>
-                <div className="text-xl text-white/90 font-light mb-1">
+                <div className="text-lg text-white/80 font-light mb-1" style={{ fontFamily: 'var(--font-heading)' }}>
                   {translateWeatherCondition(weatherData.current.condition, language)}
                 </div>
-                <div className="text-sm text-white/60">
+                <div className="text-sm text-white/50" style={{ fontFamily: 'var(--font-body)' }}>
                   {t.feelsLike} {weatherData.current.feelsLike}° · H:{weatherData.forecast[0]?.high}° L:{weatherData.forecast[0]?.low}°
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="px-4 pb-4 grid grid-cols-2 gap-3">
+              {/* Stats grid */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.15 }}
+                className="px-4 pb-4 grid grid-cols-2 gap-3"
+              >
                 {[
                   { icon: <Droplets className="w-5 h-5" />, label: t.humidity, value: `${weatherData.current.humidity}%` },
                   { icon: <Wind className="w-5 h-5" />, label: t.windSpeed, value: `${weatherData.current.windSpeed} km/h` },
                   { icon: <Eye className="w-5 h-5" />, label: t.visibility, value: `${weatherData.current.visibility} km` },
                   { icon: <Gauge className="w-5 h-5" />, label: t.pressure, value: `${weatherData.current.pressure} hPa` },
                 ].map((stat, i) => (
-                  <div key={i} className="glass-card rounded-2xl p-4 flex items-center gap-3">
-                    <div className="text-white/70">{stat.icon}</div>
+                  <div key={i} className="glass-card rounded-2xl p-4 flex items-center gap-3 hover:bg-white/[0.12] transition-colors">
+                    <div className="text-white/60">{stat.icon}</div>
                     <div>
-                      <p className="text-white/60 text-xs">{stat.label}</p>
-                      <p className="text-white font-semibold text-sm">{stat.value}</p>
+                      <p className="text-white/50 text-xs" style={{ fontFamily: 'var(--font-body)' }}>{stat.label}</p>
+                      <p className="text-white font-semibold text-sm" style={{ fontFamily: 'var(--font-heading)' }}>{stat.value}</p>
                     </div>
                   </div>
                 ))}
-                
+
                 <div className="glass-card rounded-2xl p-4">
-                  <p className="text-white/60 text-xs mb-1">{t.uvIndex}</p>
+                  <p className="text-white/50 text-xs mb-1">{t.uvIndex}</p>
                   <div className="flex items-end gap-2">
-                    <p className="text-white font-bold text-2xl">{weatherData.current.uvIndex}</p>
-                    <p className="text-white/60 text-xs mb-1">
-                      {getUVLabel(weatherData.current.uvIndex, t)}
-                    </p>
+                    <p className="text-white font-bold text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>{weatherData.current.uvIndex}</p>
+                    <p className="text-white/50 text-xs mb-1">{getUVLabel(weatherData.current.uvIndex, t)}</p>
                   </div>
                   <div className="h-1.5 bg-white/10 rounded-full mt-2 overflow-hidden">
                     <div
@@ -230,8 +197,8 @@ const WeatherDashboard = () => {
                   </div>
                 </div>
                 <div className="glass-card rounded-2xl p-4">
-                  <p className="text-white/60 text-xs mb-1">{t.airQuality}</p>
-                  <p className="text-white font-bold text-2xl">{getAQILabel(weatherData.current.airQuality, t)}</p>
+                  <p className="text-white/50 text-xs mb-1">{t.airQuality}</p>
+                  <p className="text-white font-bold text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>{getAQILabel(weatherData.current.airQuality, t)}</p>
                   <div className="h-1.5 bg-white/10 rounded-full mt-2 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-700"
@@ -242,12 +209,12 @@ const WeatherDashboard = () => {
                     />
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
               <WeatherInsights weatherData={weatherData} language={language} />
-              <ForecastSwiper 
-                hourly={weatherData.hourly} 
-                forecast={weatherData.forecast} 
+              <ForecastSwiper
+                hourly={weatherData.hourly}
+                forecast={weatherData.forecast}
                 onHaptic={() => haptic(30)}
                 language={language}
               />
@@ -257,29 +224,37 @@ const WeatherDashboard = () => {
           ) : (
             <div className="flex flex-col items-center justify-center min-h-[60vh] px-8 text-center">
               {isLoading ? (
-                <div className="space-y-4">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-4"
+                >
                   <div className="text-6xl animate-bounce">🌍</div>
-                  <p className="text-white/80 text-lg">
+                  <p className="text-white/80 text-lg" style={{ fontFamily: 'var(--font-heading)' }}>
                     {geoStatus === 'loading' ? t.findingLocation : t.loadingWeather}
                   </p>
                   <div className="flex gap-1.5 justify-center">
-                    {[0,1,2].map(i => (
+                    {[0, 1, 2].map(i => (
                       <div key={i} className="w-2 h-2 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
                     ))}
                   </div>
-                </div>
+                </motion.div>
               ) : (
-                <div className="space-y-4">
-                  <div className="text-7xl">🌤️</div>
-                  <h2 className="text-2xl font-semibold text-white">{t.weatherAssistant}</h2>
-                  <p className="text-white/70">{t.searchAnyCity}</p>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-4"
+                >
+                  <div className="text-7xl animate-float-slow">🌤️</div>
+                  <h2 className="text-2xl font-semibold text-white" style={{ fontFamily: 'var(--font-heading)' }}>{t.weatherAssistant}</h2>
+                  <p className="text-white/60" style={{ fontFamily: 'var(--font-body)' }}>{t.searchAnyCity}</p>
                   {!apiKey && (
                     <div className="flex items-center gap-2 bg-orange-500/20 border border-orange-400/30 rounded-xl px-4 py-2 text-white/90 text-sm">
                       <span>⚠️</span>
                       <span>Add API key in settings for real weather data</span>
                     </div>
                   )}
-                </div>
+                </motion.div>
               )}
             </div>
           )}
@@ -294,18 +269,20 @@ const WeatherDashboard = () => {
           )}
         </div>
 
+        {/* Search bar */}
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-30 pb-safe">
-          <div className="mx-3 mb-4 glass-card rounded-2xl px-3 py-3 border border-white/20">
+          <div className="mx-3 mb-4 glass-card-strong rounded-2xl px-3 py-3">
             <div className="flex items-center gap-2">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                 <input
                   type="text"
                   placeholder={t.searchLocation}
                   value={searchText}
                   onChange={e => setSearchText(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="w-full h-11 pl-9 pr-3 bg-white/10 text-white placeholder:text-white/40 rounded-xl border border-white/20 focus:border-white/40 focus:outline-none text-sm"
+                  className="w-full h-11 pl-9 pr-3 bg-white/10 text-white placeholder:text-white/30 rounded-xl border border-white/15 focus:border-white/40 focus:outline-none text-sm transition-all"
+                  style={{ fontFamily: 'var(--font-body)' }}
                 />
               </div>
               <VoiceInput
@@ -320,8 +297,8 @@ const WeatherDashboard = () => {
                   onClick={toggleSpeak}
                   className={`h-11 w-11 min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
                     isSpeaking
-                      ? 'bg-purple-500/50 text-purple-200'
-                      : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
+                      ? 'bg-violet-500/40 text-violet-200'
+                      : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
                   }`}
                 >
                   {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
@@ -329,7 +306,7 @@ const WeatherDashboard = () => {
               )}
               <button
                 onClick={() => setShowSettings(true)}
-                className="h-11 w-11 min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center flex-shrink-0 transition-all bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+                className="h-11 w-11 min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center flex-shrink-0 transition-all bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
               >
                 <Settings className="w-5 h-5" />
               </button>
@@ -337,6 +314,7 @@ const WeatherDashboard = () => {
                 onClick={handleSearch}
                 disabled={isLoading || !searchText.trim()}
                 className="h-11 px-4 min-h-[44px] rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-medium disabled:opacity-40 transition-all flex-shrink-0"
+                style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Go
               </button>
