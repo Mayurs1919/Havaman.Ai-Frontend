@@ -1,4 +1,6 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { Sparkles } from 'lucide-react';
 import { WeatherData } from '@/hooks/useWeather';
 import { getTranslations } from '@/utils/translations';
 
@@ -71,19 +73,51 @@ const WeatherInsights = ({ weatherData, language }: WeatherInsightsProps) => {
   
   return (
     <div className="px-4 pb-4">
-      <h3 className="text-white/80 text-sm font-semibold uppercase tracking-wider mb-3">
-        {t.whatToWear}
-      </h3>
-      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-        {insights.map((insight, i) => (
-          <div
-            key={i}
-            className="flex-shrink-0 glass-card rounded-2xl px-4 py-3 min-w-[120px] text-center space-y-1"
-          >
-            <div className="text-3xl">{insight.emoji}</div>
-            <p className="text-white text-xs font-semibold leading-tight">{insight.title}</p>
-            <p className="text-white/60 text-xs leading-tight">{insight.description}</p>
+      {/* AI Assistant Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="glass-card-strong ai-glow rounded-2xl p-4 mb-3"
+      >
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500/30 to-blue-500/30 flex items-center justify-center border border-violet-400/20">
+            <Sparkles className="w-4 h-4 text-violet-300" />
           </div>
+          <div>
+            <h3 className="text-white text-sm font-semibold" style={{ fontFamily: 'var(--font-heading)' }}>
+              {t.whatToWear}
+            </h3>
+            <p className="text-white/40 text-[10px]">AI-powered clothing suggestions</p>
+          </div>
+        </div>
+
+        {/* Primary insight as AI message */}
+        <div className="bg-white/[0.06] rounded-xl p-3 border border-white/[0.08]">
+          <p className="text-white/90 text-sm leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
+            <span className="text-lg mr-1.5">{insights[0].emoji}</span>
+            <span className="font-medium">{insights[0].title}</span>
+            <span className="text-white/50"> — {insights[0].description}</span>
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Secondary insights as cards */}
+      <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+        {insights.slice(1).map((insight, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.1 * (i + 1) }}
+            className="flex-shrink-0 glass-card rounded-2xl px-4 py-3 min-w-[120px] text-center space-y-1.5 hover:bg-white/[0.12] transition-colors"
+          >
+            <div className="text-2xl">{insight.emoji}</div>
+            <p className="text-white text-xs font-semibold leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
+              {insight.title}
+            </p>
+            <p className="text-white/50 text-[10px] leading-tight">{insight.description}</p>
+          </motion.div>
         ))}
       </div>
     </div>

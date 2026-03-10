@@ -3,82 +3,58 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
-
 @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
-
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-
     --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
-
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
-
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
-
     --radius: 0.5rem;
-
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --font-heading: 'Montserrat', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
-
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
@@ -97,9 +73,12 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
   }
 }
 
@@ -113,6 +92,17 @@
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .glass-card-strong {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .ai-glow {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.15), 0 0 60px rgba(59, 130, 246, 0.08);
   }
 
   .weather-app { touch-action: pan-y; }
@@ -147,7 +137,7 @@
     50% { opacity: 0.35; }
   }
 
-  /* ── Morning: warm sunrise golden light ── */
+  /* ── Morning ── */
   [data-timeofday="morning"] .weather-bg {
     background: linear-gradient(170deg, #fcd34d 0%, #fb923c 20%, #f97316 35%, #7dd3fc 60%, #38bdf8 80%, #0ea5e9 100%);
     background-size: 200% 200%;
@@ -156,7 +146,7 @@
     background: radial-gradient(ellipse 60% 50% at 70% 15%, rgba(253,224,71,0.5), transparent 70%);
   }
 
-  /* ── Afternoon: bright vivid sky ── */
+  /* ── Afternoon ── */
   [data-timeofday="afternoon"] .weather-bg {
     background: linear-gradient(175deg, #7dd3fc 0%, #38bdf8 25%, #0284c7 50%, #0369a1 75%, #1d4ed8 100%);
     background-size: 200% 200%;
@@ -165,7 +155,7 @@
     background: radial-gradient(ellipse 50% 40% at 50% 10%, rgba(186,230,253,0.4), transparent 70%);
   }
 
-  /* ── Dusk: dramatic sunset spectrum ── */
+  /* ── Dusk ── */
   [data-timeofday="dusk"] .weather-bg {
     background: linear-gradient(175deg, #fbbf24 0%, #f97316 15%, #ef4444 30%, #db2777 50%, #9333ea 70%, #4c1d95 85%, #1e1b4b 100%);
     background-size: 200% 200%;
@@ -174,7 +164,7 @@
     background: radial-gradient(ellipse 80% 30% at 50% 40%, rgba(251,146,60,0.35), transparent 70%);
   }
 
-  /* ── Evening: deep twilight violet ── */
+  /* ── Evening ── */
   [data-timeofday="evening"] .weather-bg {
     background: linear-gradient(175deg, #7c3aed 0%, #6d28d9 15%, #5b21b6 30%, #4c1d95 50%, #2e1065 70%, #1e1b4b 85%, #0f172a 100%);
     background-size: 200% 200%;
@@ -183,7 +173,7 @@
     background: radial-gradient(ellipse 40% 30% at 30% 20%, rgba(139,92,246,0.25), transparent 70%);
   }
 
-  /* ── Night: deep space with star shimmer ── */
+  /* ── Night ── */
   [data-timeofday="night"] .weather-bg {
     background: linear-gradient(175deg, #0f172a 0%, #020617 30%, #000 60%, #0c0a1a 80%, #0f172a 100%);
     background-size: 200% 200%;
@@ -248,5 +238,24 @@
   @keyframes cardSwitch {
     0% { opacity: 0; transform: scale(0.96) translateY(6px); }
     100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  @keyframes floatSlow {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .animate-float-slow {
+    animation: floatSlow 6s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
   }
 }

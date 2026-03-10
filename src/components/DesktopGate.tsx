@@ -1,17 +1,18 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Cloud, Thermometer, Wind, Droplets, Eye, Loader2 } from 'lucide-react';
+import { Cloud, Loader2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { lovable } from '@/integrations/lovable';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import GateWeatherAnimation from './GateWeatherAnimation';
+import LiveWeatherWidget from './LiveWeatherWidget';
 
 const features = [
-  { icon: Thermometer, label: 'Real-time Forecasts', desc: 'Accurate weather predictions powered by AI' },
-  { icon: Wind, label: 'Wind & Air Quality', desc: 'Detailed atmospheric conditions at a glance' },
-  { icon: Droplets, label: 'Precipitation Alerts', desc: 'Smart rain & storm notifications' },
-  { icon: Eye, label: 'AI Weather Insights', desc: 'Personalized weather intelligence' },
+  { icon: '🌡️', label: 'Real-time Forecasts', desc: 'Accurate weather predictions powered by AI' },
+  { icon: '💨', label: 'Wind & Air Quality', desc: 'Detailed atmospheric conditions at a glance' },
+  { icon: '🌧️', label: 'Precipitation Alerts', desc: 'Smart rain & storm notifications' },
+  { icon: '🧠', label: 'AI Weather Insights', desc: 'Personalized weather intelligence' },
 ];
 
 const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -55,7 +56,6 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   };
 
-  // Create QR session and start polling
   const createQrSession = useCallback(async () => {
     setQrLoading(true);
     try {
@@ -64,7 +64,6 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         .insert({})
         .select('token')
         .single();
-
       if (error || !data) {
         toast({ title: 'Failed to generate QR code', variant: 'destructive' });
         return;
@@ -77,42 +76,31 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   }, []);
 
-  // Generate QR when tab switches to qr
   useEffect(() => {
-    if (activeTab === 'qr' && !qrToken) {
-      createQrSession();
-    }
+    if (activeTab === 'qr' && !qrToken) createQrSession();
   }, [activeTab, qrToken, createQrSession]);
 
-  // Listen for QR session authentication via realtime
   useEffect(() => {
     if (!qrToken) return;
-
     const channel = supabase
       .channel(`qr-${qrToken}`)
       .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'qr_login_sessions',
+        event: 'UPDATE', schema: 'public', table: 'qr_login_sessions',
         filter: `token=eq.${qrToken}`,
       }, async (payload: any) => {
         if (payload.new.status === 'authenticated' && payload.new.user_id) {
-          // Session authenticated on mobile — sign in via a custom token exchange
-          // For now, we show success and redirect
           toast({ title: 'Signed in via mobile!' });
           setBypass(true);
         }
       })
       .subscribe();
 
-    // Also poll as fallback
     const interval = setInterval(async () => {
       const { data } = await supabase
         .from('qr_login_sessions')
         .select('status, user_id')
         .eq('token', qrToken)
         .single();
-
       if (data?.status === 'authenticated') {
         toast({ title: 'Signed in via mobile!' });
         setBypass(true);
@@ -120,13 +108,9 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       }
     }, 3000);
 
-    return () => {
-      supabase.removeChannel(channel);
-      clearInterval(interval);
-    };
+    return () => { supabase.removeChannel(channel); clearInterval(interval); };
   }, [qrToken]);
 
-  // Regenerate token every 4.5 min
   useEffect(() => {
     if (!qrToken) return;
     const timer = setTimeout(() => {
@@ -136,19 +120,17 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return () => clearTimeout(timer);
   }, [qrToken, activeTab, createQrSession]);
 
-  const qrUrl = qrToken
-    ? `${window.location.origin}/qr-auth?token=${qrToken}`
-    : '';
+  const qrUrl = qrToken ? `${window.location.origin}/qr-auth?token=${qrToken}` : '';
 
   if (!isDesktop || bypass) return <>{children}</>;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0e27] via-[#0d1942] to-[#0a1628] relative overflow-hidden">
-      {/* Weather animation background */}
+    <div className="min-h-screen bg-gradient-to-br from-[#070b1e] via-[#0c1538] to-[#081225] relative overflow-hidden">
       <GateWeatherAnimation />
 
-      {/* Radial glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-blue-500/[0.04] blur-[120px] pointer-events-none" />
+      {/* Radial glows */}
+      <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] rounded-full bg-blue-600/[0.04] blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-violet-600/[0.03] blur-[120px] pointer-events-none" />
 
       <div className="relative z-10 min-h-screen flex">
         {/* Left: Branding & Features */}
@@ -158,29 +140,29 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <div className="flex items-center gap-2 mb-8">
+            <div className="flex items-center gap-2.5 mb-8">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <Cloud className="w-6 h-6 text-white" />
               </div>
               <div className="flex items-center gap-0.5">
-                <span className="text-white font-bold text-2xl tracking-tight">Havaman</span>
+                <span className="text-white font-bold text-2xl tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>Havaman</span>
                 <span className="text-white/40 font-light text-2xl">.</span>
-                <span className="bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text text-transparent font-bold text-2xl">Ai</span>
+                <span className="bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text text-transparent font-bold text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>Ai</span>
               </div>
             </div>
 
-            <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight mb-4">
+            <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight mb-4" style={{ fontFamily: 'var(--font-heading)' }}>
               Your AI-Powered<br />
               <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-teal-400 bg-clip-text text-transparent">
                 Weather Assistant
               </span>
             </h1>
-            <p className="text-white/50 text-lg max-w-md mb-12 leading-relaxed">
+            <p className="text-white/45 text-lg max-w-md mb-10 leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
               Experience intelligent weather forecasting with real-time AI insights,
               personalized alerts, and beautiful visualizations.
             </p>
 
-            <div className="grid grid-cols-2 gap-4 max-w-lg">
+            <div className="grid grid-cols-2 gap-3.5 max-w-lg mb-10">
               {features.map((f, i) => (
                 <motion.div
                   key={f.label}
@@ -189,14 +171,15 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   transition={{ duration: 0.5, delay: 0.3 + i * 0.1 }}
                   className="group p-4 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:border-white/[0.12] transition-all duration-300"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <f.icon className="w-4.5 h-4.5 text-blue-400" size={18} />
-                  </div>
-                  <p className="text-white/90 text-sm font-semibold mb-1">{f.label}</p>
-                  <p className="text-white/40 text-xs leading-relaxed">{f.desc}</p>
+                  <div className="text-2xl mb-2.5">{f.icon}</div>
+                  <p className="text-white/90 text-sm font-semibold mb-1" style={{ fontFamily: 'var(--font-heading)' }}>{f.label}</p>
+                  <p className="text-white/35 text-xs leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>{f.desc}</p>
                 </motion.div>
               ))}
             </div>
+
+            {/* Live weather widget */}
+            <LiveWeatherWidget />
           </motion.div>
         </div>
 
@@ -215,15 +198,15 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   <Cloud className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex items-center gap-0.5">
-                  <span className="text-white font-bold text-xl">Havaman</span>
+                  <span className="text-white font-bold text-xl" style={{ fontFamily: 'var(--font-heading)' }}>Havaman</span>
                   <span className="text-white/40 font-light text-xl">.</span>
-                  <span className="bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text text-transparent font-bold text-xl">Ai</span>
+                  <span className="bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text text-transparent font-bold text-xl" style={{ fontFamily: 'var(--font-heading)' }}>Ai</span>
                 </div>
               </div>
-              <p className="text-white/40 text-sm">AI Weather Intelligence</p>
+              <p className="text-white/40 text-sm" style={{ fontFamily: 'var(--font-body)' }}>AI Weather Intelligence</p>
             </div>
 
-            {/* Card */}
+            {/* Auth card */}
             <div className="rounded-3xl bg-white/[0.06] backdrop-blur-2xl border border-white/[0.08] shadow-[0_32px_64px_rgba(0,0,0,0.4)] overflow-hidden">
               {/* Tabs */}
               <div className="flex border-b border-white/[0.06]">
@@ -232,8 +215,9 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={`flex-1 py-4 text-sm font-medium transition-all relative ${
-                      activeTab === tab ? 'text-white' : 'text-white/40 hover:text-white/60'
+                      activeTab === tab ? 'text-white' : 'text-white/35 hover:text-white/55'
                     }`}
+                    style={{ fontFamily: 'var(--font-heading)' }}
                   >
                     {tab === 'google' ? 'Sign in with Google' : 'QR Code Login'}
                     {activeTab === tab && (
@@ -246,7 +230,6 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 ))}
               </div>
 
-              {/* Tab content */}
               <div className="p-8">
                 <AnimatePresence mode="wait">
                   {activeTab === 'google' ? (
@@ -259,14 +242,18 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       className="space-y-6"
                     >
                       <div className="text-center space-y-2">
-                        <h2 className="text-xl font-bold text-white">Welcome Back</h2>
-                        <p className="text-white/40 text-sm">Sign in to access your personalized weather dashboard</p>
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500/20 to-blue-500/20 flex items-center justify-center mx-auto mb-3 border border-violet-400/10">
+                          <Sparkles className="w-7 h-7 text-violet-300" />
+                        </div>
+                        <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-heading)' }}>Welcome Back</h2>
+                        <p className="text-white/40 text-sm" style={{ fontFamily: 'var(--font-body)' }}>Sign in to access your personalized weather dashboard</p>
                       </div>
 
                       <button
                         onClick={handleGoogleSignIn}
                         disabled={signingIn}
-                        className="w-full flex items-center justify-center gap-3 h-12 rounded-xl bg-white hover:bg-gray-100 transition-all text-gray-800 font-medium text-sm shadow-lg shadow-black/10 disabled:opacity-60"
+                        className="w-full flex items-center justify-center gap-3 h-12 rounded-xl bg-white hover:bg-gray-50 transition-all text-gray-800 font-medium text-sm shadow-lg shadow-black/10 disabled:opacity-60"
+                        style={{ fontFamily: 'var(--font-heading)' }}
                       >
                         <svg className="w-5 h-5" viewBox="0 0 24 24">
                           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -279,11 +266,11 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
                       <div className="flex items-center gap-3">
                         <div className="flex-1 h-px bg-white/[0.08]" />
-                        <span className="text-white/30 text-xs">or use QR code login</span>
+                        <span className="text-white/25 text-xs">or use QR code</span>
                         <div className="flex-1 h-px bg-white/[0.08]" />
                       </div>
 
-                      <p className="text-center text-white/30 text-xs leading-relaxed">
+                      <p className="text-center text-white/25 text-xs leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
                         By signing in, you agree to our Terms of Service and Privacy Policy
                       </p>
                     </motion.div>
@@ -297,8 +284,8 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       className="space-y-6"
                     >
                       <div className="text-center space-y-2">
-                        <h2 className="text-xl font-bold text-white">Scan to Sign In</h2>
-                        <p className="text-white/40 text-sm">Scan with your phone to authenticate this desktop session</p>
+                        <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-heading)' }}>Scan to Sign In</h2>
+                        <p className="text-white/40 text-sm" style={{ fontFamily: 'var(--font-body)' }}>Scan with your phone to authenticate this session</p>
                       </div>
 
                       <div className="flex justify-center">
@@ -324,10 +311,10 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
                       <div className="space-y-2">
                         <div className="flex items-center justify-center gap-2 text-white/40 text-xs">
-                          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                           <span>Waiting for mobile authentication...</span>
                         </div>
-                        <p className="text-center text-white/30 text-[11px]">
+                        <p className="text-center text-white/25 text-[11px]">
                           QR code refreshes automatically every 5 minutes
                         </p>
                       </div>
@@ -337,13 +324,13 @@ const DesktopGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </div>
             </div>
 
-            {/* Bypass link */}
             <motion.button
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1 }}
               onClick={() => setBypass(true)}
-              className="w-full mt-6 text-white/30 hover:text-white/50 text-xs transition-colors text-center"
+              className="w-full mt-6 text-white/25 hover:text-white/45 text-xs transition-colors text-center"
+              style={{ fontFamily: 'var(--font-body)' }}
             >
               Preview on desktop anyway →
             </motion.button>
