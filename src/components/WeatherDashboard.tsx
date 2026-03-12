@@ -162,7 +162,7 @@ const WeatherDashboard = () => {
   };
 
   return (
-    <div data-weather={conditionCode} data-timeofday={timeOfDay} className="weather-app max-w-[480px] mx-auto relative min-h-screen">
+    <div data-weather={conditionCode} data-timeofday={timeOfDay} data-alert={activeAlert ? 'active' : undefined} className="weather-app max-w-[480px] mx-auto relative min-h-screen">
       <div className="weather-bg" />
       <WeatherParticles conditionCode={conditionCode} timeOfDay={timeOfDay} />
 
