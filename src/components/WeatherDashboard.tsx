@@ -94,6 +94,49 @@ const WeatherDashboard = () => {
 
   const conditionCode = weatherData?.conditionCode || 'Default';
 
+  // Severe Weather Alert state — triggered by extreme conditions
+  const [activeAlert, setActiveAlert] = useState<WeatherAlert | null>(null);
+  useEffect(() => {
+    if (!weatherData) return;
+    const { current, conditionCode: code } = weatherData;
+    let alert: WeatherAlert | null = null;
+
+    if (code === 'Thunderstorm') {
+      alert = {
+        type: 'storm', severity: 'extreme',
+        title: 'Severe Thunderstorm Alert',
+        description: `A severe thunderstorm is affecting ${weatherData.location}. Dangerous lightning, heavy rainfall, and strong winds expected.`,
+        expiresAt: new Date(Date.now() + 3 * 60 * 60 * 1000),
+        survivalSteps: ['Move to a sturdy indoor shelter immediately', 'Stay away from windows and unplug electronics', 'Charge devices now and prepare emergency supplies'],
+      };
+    } else if (current.temperature >= 42) {
+      alert = {
+        type: 'high_heat', severity: 'extreme',
+        title: 'Extreme Heat Warning',
+        description: `Dangerously high temperatures of ${current.temperature}° detected in ${weatherData.location}. Risk of heat stroke is very high.`,
+        expiresAt: new Date(Date.now() + 6 * 60 * 60 * 1000),
+        survivalSteps: ['Stay indoors in air-conditioned spaces', 'Drink water every 15 minutes even if not thirsty', 'Avoid outdoor activities between 11 AM and 4 PM'],
+      };
+    } else if (current.windSpeed >= 60) {
+      alert = {
+        type: 'hurricane', severity: 'extreme',
+        title: 'High Wind Emergency',
+        description: `Extreme wind speeds of ${current.windSpeed} km/h detected. Flying debris possible.`,
+        expiresAt: new Date(Date.now() + 4 * 60 * 60 * 1000),
+        survivalSteps: ['Seek shelter in an interior room away from windows', 'Secure loose outdoor objects immediately', 'Do not drive — pull over if already on the road'],
+      };
+    } else if (code === 'Snow' && current.temperature <= -10) {
+      alert = {
+        type: 'blizzard', severity: 'warning',
+        title: 'Blizzard Warning',
+        description: `Blizzard conditions with heavy snowfall and ${current.temperature}° temperatures in ${weatherData.location}.`,
+        expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000),
+        survivalSteps: ['Stay indoors and keep warm with layers', 'Keep a flashlight and extra batteries accessible', 'Avoid travel — roads may be impassable'],
+      };
+    }
+    setActiveAlert(alert);
+  }, [weatherData]);
+
   const getTimeOfDay = (): string => {
     const hour = new Date().getHours();
     if (hour >= 6 && hour < 12) return 'morning';
