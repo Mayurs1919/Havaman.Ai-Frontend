@@ -255,6 +255,7 @@ const WeatherDashboard = () => {
                 </div>
               </motion.div>
 
+              <SevereWeatherAlert alert={activeAlert} onDismiss={() => setActiveAlert(null)} language={language} />
               <WeatherInsights weatherData={weatherData} language={language} />
               <ForecastSwiper
                 hourly={weatherData.hourly}
