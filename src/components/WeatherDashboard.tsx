@@ -9,6 +9,7 @@ import SettingsModal from './SettingsModal';
 import WeatherParticles from './WeatherParticles';
 import WeatherWindow from './WeatherWindow';
 import AppHeader from './AppHeader';
+import SevereWeatherAlert, { WeatherAlert } from './SevereWeatherAlert';
 import { useWeather } from '@/hooks/useWeather';
 import { toast } from '@/hooks/use-toast';
 import { getTranslations, translateWeatherCondition, detectBrowserLanguage } from '@/utils/translations';
