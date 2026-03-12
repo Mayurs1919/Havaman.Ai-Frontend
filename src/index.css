@@ -208,6 +208,21 @@
   [data-weather="Thunderstorm"] .weather-bg { filter: saturate(0.25) brightness(0.35) contrast(1.15); }
   [data-weather="Snow"] .weather-bg { filter: saturate(0.15) brightness(1.15) contrast(0.95); }
 
+  /* ── Severe Alert Mode ── */
+  [data-alert="active"] .weather-bg {
+    filter: saturate(0.2) brightness(0.4) contrast(1.2) !important;
+    transition: filter 1s ease-in-out;
+  }
+  [data-alert="active"] .weather-bg::after {
+    background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(230,57,70,0.15), transparent 70%) !important;
+    animation: alertPulse 3s ease-in-out infinite !important;
+    opacity: 1 !important;
+  }
+  @keyframes alertPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
   @keyframes radarSweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .radar-sweep {
     position: absolute; width: 100%; height: 2px; top: 50%;
