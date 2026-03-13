@@ -81,14 +81,13 @@ export const usePushNotifications = () => {
     } else if ('Notification' in window && Notification.permission === 'granted') {
       // Web fallback
       try {
-        new Notification(`⚠️ ${alert.title}`, {
+        const options: NotificationOptions & Record<string, unknown> = {
           body: alert.description,
           icon: '/icon-512.png',
-          badge: '/icon-512.png',
           tag: `weather-alert-${alert.type}`,
           requireInteraction: true,
-          vibrate: [200, 100, 200, 100, 200] as any,
-        });
+        };
+        new Notification(`⚠️ ${alert.title}`, options);
       } catch (e) {
         console.warn('[WebNotif] Failed:', e);
       }
