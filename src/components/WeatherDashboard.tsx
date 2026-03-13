@@ -11,6 +11,7 @@ import WeatherWindow from './WeatherWindow';
 import AppHeader from './AppHeader';
 import SevereWeatherAlert, { WeatherAlert } from './SevereWeatherAlert';
 import { useWeather } from '@/hooks/useWeather';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { toast } from '@/hooks/use-toast';
 import { getTranslations, translateWeatherCondition, detectBrowserLanguage } from '@/utils/translations';
 
