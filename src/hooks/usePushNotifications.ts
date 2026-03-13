@@ -87,7 +87,7 @@ export const usePushNotifications = () => {
           badge: '/icon-512.png',
           tag: `weather-alert-${alert.type}`,
           requireInteraction: true,
-          vibrate: [200, 100, 200, 100, 200],
+          vibrate: [200, 100, 200, 100, 200] as any,
         });
       } catch (e) {
         console.warn('[WebNotif] Failed:', e);
