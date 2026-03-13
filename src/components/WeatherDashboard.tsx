@@ -95,8 +95,12 @@ const WeatherDashboard = () => {
 
   const conditionCode = weatherData?.conditionCode || 'Default';
 
+  const { sendWeatherAlert } = usePushNotifications();
+
   // Severe Weather Alert state — triggered by extreme conditions
   const [activeAlert, setActiveAlert] = useState<WeatherAlert | null>(null);
+  const prevAlertRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!weatherData) return;
     const { current, conditionCode: code } = weatherData;
@@ -136,7 +140,15 @@ const WeatherDashboard = () => {
       };
     }
     setActiveAlert(alert);
-  }, [weatherData]);
+
+    // Send push notification for new alerts
+    if (alert && alert.type !== prevAlertRef.current) {
+      sendWeatherAlert(alert);
+      prevAlertRef.current = alert.type;
+    } else if (!alert) {
+      prevAlertRef.current = null;
+    }
+  }, [weatherData, sendWeatherAlert]);
 
   const getTimeOfDay = (): string => {
     const hour = new Date().getHours();
