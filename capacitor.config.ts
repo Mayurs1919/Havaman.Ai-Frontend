@@ -8,6 +8,12 @@ const config: CapacitorConfig = {
     url: 'https://b28ae43e-61e9-488b-9b8b-111129eaf0f5.lovableproject.com?forceHideBadge=true',
     cleartext: true,
   },
+  android: {
+    iconPath: 'public/app-icon.png',
+  },
+  ios: {
+    iconPath: 'public/app-icon.png',
+  },
   plugins: {
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
